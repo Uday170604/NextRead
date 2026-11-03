@@ -1,79 +1,140 @@
-# NextRead
+# 📚 NextRead
 
-**What should I read next?** NextRead is a book *recommendation* product — not a library or a reader. It helps someone decide
-what to read next and makes that decision feel personal, confident and fun. Book content is never shown; "Where to get it" are links only.
+[![CI](https://github.com/Uday170604/NextRead/actions/workflows/ci.yml/badge.svg)](https://github.com/Uday170604/NextRead/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.11+-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-Stack: FastAPI · SQLAlchemy · SQLite (any SQLAlchemy DB) · vanilla-JS single-page app (ES modules, no build step) · JWT auth · 53 pytest tests.
+**"What should I read next?"** NextRead is a personalized book recommendation app. It is not a library or a reader: it helps you decide what to read next and explains *why* each book was picked for you.
 
-## Quick start
+<!-- Example: ![Home](docs/screenshots/home.png) -->
+
+---
+
+## ✨ Highlights
+
+- **Hybrid recommender**: TF-IDF content similarity + user-based k-NN collaborative filtering + Bayesian popularity + favourite-genre match, with adaptive weights.
+- **Explainable results**: every recommendation has a score breakdown and a human-readable reason.
+- **Swipe deck (Book Match)**: swipe right/left/up/down to give feedback; cards re-rank live and a taste meter updates.
+- **Mood picker**: "Something light", "Mind-bending", "Cry-worthy" and more, with transparent scoring.
+- **Diversity and exploration**: MMR re-ranking plus one exploration slot for a genre you haven't tried.
+- **Cold-start handling**: onboarding (genres → moods → swipe 8 books).
+- **Netflix-style rows, My Taste dashboard, compare two books, shareable cards, search with suggestions, admin analytics.**
+- **Accessible**: dark/light theme, reduced-motion support, ARIA combobox search, keyboard navigation.
+
+## 🧠 How the recommender works
+
+```
+User feedback + ratings ─┐
+                         ├─► Content score (TF-IDF)         ─┐
+Book metadata ───────────┤   Collaborative score (k-NN)      ├─► Weighted blend ─► MMR re-rank ─► Top picks
+                         │   Bayesian popularity             │   (adaptive)        + 1 explore slot
+Genre / mood prefs ──────┘   Genre match                    ─┘
+```
+
+- *Interested* = positive signal, *Saved* = mild positive, *Read* = rating-based.
+- *Not for me* = hard exclusion plus a negative signal on similar books (reason-aware: too long → length penalty, not my genre → genre penalty).
+- Mood score: `final = 0.6 × mood fit + 0.4 × normal match`.
+- `GET /recommendations/{book_id}/explain` shows weights, contributions and penalties.
+
+Code lives in `app/recommender.py` and `app/moods.py`.
+
+## 🛠 Tech stack
+
+| Layer | Tech |
+|---|---|
+| Backend | FastAPI, SQLAlchemy, Pydantic |
+| Database | SQLite by default (any SQLAlchemy DB works) |
+| Auth | JWT |
+| Frontend | Vanilla JS single-page app (ES modules, no build step) |
+| Testing | pytest (53 tests) |
+| DevOps | Docker, GitHub Actions |
+
+## 🚀 Quick start
+
 ```bash
+git clone https://github.com/Uday170604/NextRead.git
+cd NextRead
 python -m venv .venv && source .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+cp .env.example .env                                   # then edit values
 python -m uvicorn app.main:app --reload
 ```
-* Web app: http://127.0.0.1:8000  ·  API docs: http://127.0.0.1:8000/docs
-* First start creates `bookrec.db`, seeds 50 books (covers, ISBNs, page counts, mood tags), 7 persona users, 40 synthetic readers and ~600 ratings.
 
-| Account | E-mail | Password |
-|---|---|---|
-| Admin | admin@bookrec.local | Admin@12345 |
-| Demo readers | emma@, john@, sarah@, lucy@, prof.rao@, meera@example.com | Password@123 |
-| Brand-new reader (see onboarding) | alex@example.com | Password@123 |
+- Web app: http://127.0.0.1:8000
+- API docs (Swagger): http://127.0.0.1:8000/docs
 
-## Features
-**Discovery UI**
-* **Hero "Your next read"** — realistic CSS-3D hardcover (spine, page edges, gloss + paper texture, idle float, tilt that follows the cursor or the phone gyroscope, dynamic shadow), match-% ring, one-line human reason, genre chips, ❤ Interested / ✕ Not for me / 🔖 Save for later / ✓ Already read it (quick star rating), and **Show me another**.
-* **Book Match swipe deck** — swipe right = interested, left = not for me (optionally say why: too long / not my genre / I know the story), up = already read (asks for a rating), down or 🔖 = save. Arrow keys work too. Every decision is sent to the backend and the cards underneath **re-rank live**; the **taste meter** ("Your taste profile: 64% learned") sharpens as you swipe.
-* **Mood & intent picker** — Something light, Mind-bending, Cry-worthy, Learn something new, Quick read, Epic & long, Comfort read, Dark & gripping. Pick one or two. The scoring is transparent: `final = 0.6 × mood fit (genre + keywords + length) + 0.4 × your normal match`, and every card lists the signals that fired.
-* **Netflix-style rows** (snap-scrolling, lazily hydrated, keyboard navigable): Top picks for you · Because you liked *X* · Trending now · Hidden gems · Readers like you also loved · New to explore · From your favourite authors.
-* **Detail panel** (side panel / bottom sheet, cover flies in from the card): description, facts, community rating and reviews, *Why we picked this for you* (breakdown bars), similar books, Where to get it (Open Library, Google Books, WorldCat), rate / review / decide controls.
-* **My Taste** — genre radar + bars (with a table view), favourite authors, average rating, mood breakdown, a "taste DNA" sentence, and Interested / Saved / Already read / Not for me lists with **undo**.
-* **Compare two books** and a **shareable card** (canvas → PNG download, native share, copy-link to a public picks page).
-* **Search** with instant suggestions (title / author / genre, ARIA combobox), "Did you mean…", filters for genre, mood, rating, year and page range.
-* **Weekly "Your picks"** summary card, **first-run onboarding** (genres → moods → swipe 8 books), **admin** panel (add books with cover URL / page count / mood tags, moderation, users, **recommendation analytics**).
-* Day/night theme (follows the OS by default), `prefers-reduced-motion` support (flat covers, no tilt/float/parallax) plus a manual motion toggle, skeleton loaders, empty / error / offline states, bottom tab bar on phones.
+On first start the app creates the database and seeds 50 books, demo users, 40 synthetic readers and ~600 ratings.
 
-**Recommender** (`app/recommender.py`, `app/moods.py`)
-* Hybrid: TF-IDF content + user-based k-NN collaborative filtering + Bayesian popularity + favourite-genre match, with adaptive weights.
-* Feedback signals: *interested* = positive, *saved* = mild positive, *read* = rating-based, *not interested* = **hard exclusion** + negative signal on similar books (reason-aware: *too long* → length penalty, *not my genre* → genre penalty).
-* **MMR diversity re-ranking** plus one **exploration slot** for a genre the user has never tried.
-* Every recommendation has a score breakdown and a human-readable reason; `/explain` shows weights, contributions and penalties.
-* **Cold start**: onboarding genres/moods + a deliberately genre-diverse calibration deck for the first ~8 swipes.
+**Demo accounts (local use only):** demo readers use the password `Password@123` (e.g. `emma@example.com`). The admin account is configured through `ADMIN_EMAIL` and `ADMIN_PASSWORD` in your `.env`.
 
-## Tests
+## ⚙️ Configuration
+
+| Variable | Purpose |
+|---|---|
+| `SECRET_KEY` | JWT signing key (use a long random value) |
+| `DATABASE_URL` | Database connection string |
+| `SEED_ON_STARTUP` | Seed demo data on first run (`false` in production) |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Admin account |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token lifetime |
+
+> ⚠️ Before any real deployment: set a strong `SECRET_KEY`, change the admin credentials, and set `SEED_ON_STARTUP=false`.
+
+## 🐳 Docker
+
 ```bash
-python -m pytest -q        # 53 tests: the 24 original API tests + 29 new (feedback, undo, deck, rows, mood, explain, taste, compare, search, migration, recommender behaviour)
+docker build -t nextread .
+docker run -p 8000:8000 --env-file .env nextread
 ```
 
-## Configuration
-Environment variables (see `.env.example`): `SECRET_KEY`, `DATABASE_URL`, `SEED_ON_STARTUP`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ACCESS_TOKEN_EXPIRE_MINUTES`.
-Before real use: set a long random `SECRET_KEY`, change the admin credentials, set `SEED_ON_STARTUP=false`.
+## ✅ Tests
 
-## Upgrading an existing `bookrec.db` (migration notes)
-`Base.metadata.create_all()` only creates *missing tables*, so on every start the app also runs `app/migrations.py`:
-1. **`migrate()`** inspects the live schema and runs `ALTER TABLE … ADD COLUMN` only for absent columns: `books.cover_url`, `books.page_count`, `books.mood_tags`, `users.favorite_moods`, `users.onboarded_at` (all nullable; the new `feedback` table is created by `create_all`).
-2. **`backfill()`** fills new data without overwriting anything: covers / ISBN / page counts for the known seeded titles (only where NULL), derived `mood_tags` (only where NULL), a `read` feedback row for every existing rating and a `saved` row for every wishlist item.
-
-Both steps are idempotent (a second start changes nothing), never drop or rewrite existing data, and are covered by tests that downgrade a database and upgrade it again. The default database file name (`bookrec.db`) and demo logins were kept so existing installs keep working.
-
-## Docker
 ```bash
-docker build -t nextread . && docker run -p 8000:8000 nextread
+python -m pytest -q
 ```
 
-## API (selection — full list at `/docs`)
+Covers the API, feedback and undo, swipe deck, rows, moods, explanations, taste profile, compare, search, DB migration and recommender behaviour.
+
+## 🔌 API overview
+
+Full interactive docs are available at `/docs`.
+
 | Area | Endpoints |
 |---|---|
-| Auth / profile | `POST /auth/register`, `POST /auth/login`, `GET/PUT /users/me`, `PUT /users/me/preferences`, `POST /users/me/onboarding`, `GET /users/me/taste` |
-| Books | `GET /books` (q, genre, author, year, min_rating, pages_min/max, mood, sort), `GET /books/{id}`, `GET /books/{id}/similar`, `GET /books/suggest?q=`, `GET /books/compare?a=&b=`, `GET /moods`, `GET /genres`, `GET /authors` |
-| Ratings / wishlist | `PUT/DELETE /books/{id}/review`, `GET /books/{id}/reviews`, `GET /reviews/mine`, `GET/POST/DELETE /wishlist` |
-| Feedback | `POST /feedback`, `DELETE /feedback/{book_id}` (undo), `GET /feedback?action=interested\|not_interested\|saved\|read` |
-| Recommendations | `GET /recommendations`, `/recommendations/featured`, `/rows`, `/mood?moods=`, `/deck?limit=&exclude=`, `/weekly`, `/trending`, `/{book_id}/explain` |
-| Admin | `/admin/books`, `/admin/reviews`, `/admin/users`, `/admin/stats`, `/admin/analytics`, `/admin/import/openlibrary` |
+| Auth / profile | `POST /auth/register`, `POST /auth/login`, `GET/PUT /users/me`, `GET /users/me/taste` |
+| Books | `GET /books`, `GET /books/{id}`, `GET /books/{id}/similar`, `GET /books/suggest`, `GET /books/compare` |
+| Reviews / wishlist | `PUT/DELETE /books/{id}/review`, `GET/POST/DELETE /wishlist` |
+| Feedback | `POST /feedback`, `DELETE /feedback/{book_id}`, `GET /feedback` |
+| Recommendations | `GET /recommendations`, `/rows`, `/mood`, `/deck`, `/weekly`, `/trending`, `/{book_id}/explain` |
+| Admin | `/admin/books`, `/admin/reviews`, `/admin/users`, `/admin/stats`, `/admin/analytics` |
 
-## Project layout
+## 📁 Project structure
+
 ```
-app/            main.py, models.py, migrations.py, recommender.py, moods.py, taste.py, presenters.py, routers/…
-app/static/     index.html, css/app.css, js/{util,api,theme,cover,actions,rows,detail,deck,home,onboarding,taste,browse,compare,share,auth,admin,main}.js
-tests/          test_api.py (original), test_features.py (new)
+app/
+  main.py  models.py  migrations.py  recommender.py  moods.py  taste.py  presenters.py
+  routers/            API route modules
+  static/             index.html, css/, js/ (SPA modules)
+tests/                test_api.py, test_features.py
+Dockerfile  requirements.txt  .env.example
 ```
+
+## 🗄 Database migrations
+
+On startup the app creates missing tables and runs `app/migrations.py`, which adds any missing columns and backfills new data. Both steps are idempotent and never drop or overwrite existing data.
+
+## 🗺 Roadmap
+
+- [ ] PostgreSQL + Alembic migrations
+- [ ] Rate limiting on auth endpoints
+- [ ] Redis caching for recommendation rows
+- [ ] Larger real-world dataset via Open Library import
+- [ ] Test coverage badge
+
+## 📄 License
+
+Released under the [MIT License](LICENSE).
+
+## 👤 Author
+
+**Uday Garodhara**: [LinkedIn](https://www.linkedin.com/in/uday-garodhara-078223283/) · [GitHub](https://github.com/Uday170604)
