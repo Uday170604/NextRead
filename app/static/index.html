@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NextRead — what should I read next?</title>
+<meta name="description" content="NextRead helps you decide what to read next: personal book picks, swipe matching and mood-based discovery with a clear reason for every match.">
+<meta name="theme-color" content="#f8f3ea" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#1a1511" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235b3a29'/%3E%3Cpath d='M18 12h28v40l-14-9-14 9z' fill='%23f8f3ea'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+<a class="skip" href="#view">Skip to content</a>
+<div class="offline" id="offline" role="status" hidden>You're offline — showing what's already loaded. Changes will not save until you reconnect.</div>
+<header class="top"><div class="bar">
+  <button class="logo" onclick="location.hash='home'" aria-label="NextRead home">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 2h14a1 1 0 0 1 1 1v19l-8-5-8 5V3a1 1 0 0 1 1-1z"/></svg>NextRead</button>
+  <nav class="nav" id="nav" aria-label="Main"></nav>
+  <div class="tools"><button class="icon-btn" id="motionBtn" aria-label="Reduce motion" aria-pressed="false" title="Reduce motion">Motion</button>
+    <button class="icon-btn" id="themeBtn" aria-label="Switch theme">Dark</button><div id="who"></div></div>
+</div></header>
+<main id="view" tabindex="-1"></main>
+<nav class="tabbar" id="tabbar" aria-label="Main (mobile)"></nav>
+<footer class="footer">NextRead — a recommendation engine, not a reader. Book covers courtesy of <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a>. © NextRead</footer>
+<dialog id="detail" class="side" aria-labelledby="dtitle"></dialog>
+<dialog id="modal" class="modal" aria-label="Dialog"></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="sr" id="live" role="status" aria-live="polite" aria-atomic="true"></div>
+<script type="module" src="/static/js/main.js"></script>
+</body>
+</html>
